@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samsung Galaxy A56 5G - SmartGiro</title>
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CSS ESPECÍFICO DESTA PÁGINA --- */
+
+        .product-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        /* --- GALERIA AVANÇADA (CARROSSEL) --- */
+        .gallery-container {
+            position: relative;
+            border-radius: 16px;
+            border: var(--glass-border);
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+            overflow: hidden;
+            margin-bottom: 20px;
+            height: 400px; /* Altura fixa */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Imagens empilhadas (Absolute) */
+        .main-photo-item {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            align-items: center; justify-content: center;
+            padding: 20px;
+            opacity: 0; /* Invisível por padrão */
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease;
+            z-index: 1;
+            pointer-events: none; 
+        }
+
+        .main-photo-item img {
+            max-width: 100%; max-height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+        }
+
+        /* Classe que torna a imagem visível */
+        .main-photo-item.active {
+            opacity: 1;
+            z-index: 2;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        /* Botões de Navegação (Setas) */
+        .carousel-btn {
+            position: absolute;
+            top: 50%; transform: translateY(-50%);
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            transition: 0.3s;
+        }
+        .carousel-btn:hover { background: var(--neon-cyan); color: black; border-color: var(--neon-cyan); }
+        .carousel-btn:active { transform: translateY(-50%) scale(0.9); }
+        .carousel-btn.prev { left: 10px; }
+        .carousel-btn.next { right: 10px; }
+
+        /* Miniaturas */
+        .gallery-thumbs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scroll-behavior: smooth; }
+        .gallery-thumbs::-webkit-scrollbar { height: 4px; }
+        .gallery-thumbs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+        .thumb { 
+            width: 80px; height: 80px; 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 8px; padding: 5px; 
+            cursor: pointer; opacity: 0.5; 
+            transition: 0.3s; border: 1px solid transparent;
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .thumb:hover { opacity: 0.8; border-color: rgba(255,255,255,0.3); }
+        .thumb.active { opacity: 1; border-color: var(--neon-cyan); box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); transform: translateY(-2px); }
+        .thumb img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+
+        /* --- FIM GALERIA --- */
+
+        /* Ficha Técnica Detalhada */
+        .specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .spec-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 12px; border-radius: 12px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .spec-item i { color: var(--neon-cyan); font-size: 1.1rem; margin-bottom: 2px; }
+        .spec-label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .spec-value { font-size: 0.9rem; color: white; font-weight: 600; }
+
+        /* Infos Gerais */
+        .detail-price { font-size: 2.5rem; color: var(--neon-cyan); font-weight: 900; font-family: 'Outfit'; }
+        .detail-tag { display: inline-block; background: rgba(0,255,136,0.1); color: #00ff88; padding: 5px 12px; border-radius: 50px; font-size: 0.8rem; margin-bottom: 15px; border: 1px solid rgba(0,255,136,0.3); }
+
+        /* Botões com efeito de clique */
+        .btn:active { transform: scale(0.97); opacity: 0.8; }
+
+        /* Barra de Condição */
+        .condition-bar { margin: 20px 0; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; }
+        .cond-title { font-size: 0.9rem; color: #ccc; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .progress-bg { width: 100%; height: 6px; background: #333; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 10px; }
+
+        @media (max-width: 768px) {
+            .product-detail-grid { grid-template-columns: 1fr; }
+            .gallery-container { height: 300px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header style="position: relative; background: transparent; padding: 20px;">
+        <a href="index.html" style="color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.9rem;">
+            <i class="fa-solid fa-arrow-left"></i> VOLTAR
+        </a>
+    </header>
+
+    <section class="container" style="padding-bottom: 80px;">
+        
+        <div class="product-detail-grid">
+            
+            <div class="reveal">
+                
+                <div class="gallery-container">
+                    <button class="carousel-btn prev" id="prevBtn"><i class="fa-solid fa-chevron-left"></i></button>
+                    
+                    <div class="main-photo-item active">
+                        <img src="https://media.alou.cv/media/assets%2F7%20SmartphoneSamsung%20Galaxy%20A56%20-%205G_ALOU%201.png" alt="Foto 1">
+                    </div>
+                    
+                    <div class="main-photo-item">
+                        <img src="https://assets.mlcdn.com.br/conteudoproduto/24/240094900/Canaltech/images/product.png" alt="Foto 2">
+                    </div>
+                    
+                    <div class="main-photo-item">
+                        <img src="https://media.flixcar.com/webp/synd-asset/Samsung-318165662-br-galaxy-a56-5g-sm-a566-sm-a566ezkczto-545388740--Download-Source--zoom.png" alt="Foto 3">
+                    </div>
+                    
+                    <div class="main-photo-item">
+                        <img src="https://images.samsung.com/is/image/samsung/p6pim/br/sm-a566ezkazto/gallery/br-galaxy-a56-5g-sm-a566-540642-sm-a566ezkazto-545718295?$Q90_1248_936_F_PNG$" alt="Foto 4">
+                    </div>
+
+                    <button class="carousel-btn next" id="nextBtn"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                
+                <div class="gallery-thumbs" id="thumbsContainer">
+                    <div class="thumb active">
+                        <img src="https://media.alou.cv/media/assets%2F7%20SmartphoneSamsung%20Galaxy%20A56%20-%205G_ALOU%201.png">
+                    </div>
+                    <div class="thumb">
+                        <img src="https://assets.mlcdn.com.br/conteudoproduto/24/240094900/Canaltech/images/product.png">
+                    </div>
+                    <div class="thumb">
+                        <img src="https://media.flixcar.com/webp/synd-asset/Samsung-318165662-br-galaxy-a56-5g-sm-a566-sm-a566ezkczto-545388740--Download-Source--zoom.png">
+                    </div>
+                    <div class="thumb">
+                        <img src="https://images.samsung.com/is/image/samsung/p6pim/br/sm-a566ezkazto/gallery/br-galaxy-a56-5g-sm-a566-540642-sm-a566ezkazto-545718295?$Q90_1248_936_F_PNG$">
+                    </div>
+                </div>
+
+                <div class="tech-card" style="margin-top: 30px; padding: 20px;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: white;">
+                        <i class="fa-solid fa-list-check" style="margin-right: 8px; color: var(--neon-purple);"></i> Especificações
+                    </h3>
+                    
+                    <div class="specs-grid">
+                        <div class="spec-item" style="border-color: var(--neon-cyan);">
+                            <i class="fa-solid fa-palette"></i>
+                            <span class="spec-label">Cor Oficial</span>
+                            <span class="spec-value">Preto (Black)</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-microchip"></i>
+                            <span class="spec-label">Processador</span>
+                            <span class="spec-value">Exynos (Octa-Core)</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-mobile-screen"></i>
+                            <span class="spec-label">Tela</span>
+                            <span class="spec-value">6.6" Super AMOLED</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-hard-drive"></i>
+                            <span class="spec-label">Armazenamento</span>
+                            <span class="spec-value">128GB (Expansível)</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-memory"></i>
+                            <span class="spec-label">Memória RAM</span>
+                            <span class="spec-value">8GB + RAM Plus</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-camera"></i>
+                            <span class="spec-label">Câmera Principal</span>
+                            <span class="spec-value">50MP OIS (Estável)</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-wifi"></i>
+                            <span class="spec-label">Conectividade</span>
+                            <span class="spec-value">5G + NFC (Paga Aprox.)</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-battery-full"></i>
+                            <span class="spec-label">Bateria</span>
+                            <span class="spec-value">5000 mAh</span>
+                        </div>
+                        
+                    </div>
+                    
+                    <a href="https://youtu.be/XCUYthJsktY" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(255, 0, 0, 0.1); border: 1px solid rgba(255, 0, 0, 0.3); padding: 12px; border-radius: 8px; margin-top: 20px; text-decoration: none; color: white; font-weight: 600; transition: 0.3s;">
+                        <i class="fa-brands fa-youtube" style="color: red;"></i> Assistir Unboxing no YouTube
+                    </a>
+                </div>
+            </div>
+
+            <div class="reveal" style="transition-delay: 0.2s;">
+                
+                <span class="detail-tag"><i class="fa-solid fa-check"></i> DISPONÍVEL</span>
+                
+                <h1 style="font-size: 2.2rem; line-height: 1.1; margin-bottom: 10px;">Samsung Galaxy A56 5G</h1>
+                
+                <p style="color: #ccc; margin-bottom: 20px; font-size: 1.1rem;">
+                    <span style="color: var(--neon-purple);">128GB</span> | 
+                    <span style="color: white; font-weight: 600;">8GB RAM</span> | 
+                    Preto
+                </p>
+
+                <div class="detail-price">R$ 1.549,00</div>
+                <p style="font-size: 0.9rem; color: #888; margin-bottom: 30px;">
+                    Valor à vista (Pix). Parcelamento disponível na entrega.
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 40px;">
+                    
+                    <a href="LINK_DO_SEU_ANUNCIO_NO_FACEBOOK" target="_blank" class="btn btn-neon pulse-btn">
+                        <i class="fa-solid fa-shield-cat" style="margin-right: 10px;"></i> NEGOCIAR NO OLX / FACEBOOK
+                    </a>
+                    
+                    <a href="mailto:contato.esmaeltech@gmail.com" class="btn" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1);">
+                        <i class="fa-regular fa-envelope" style="margin-right: 10px;"></i> TIRAR DÚVIDA POR E-MAIL
+                    </a>
+                </div>
+
+                <div class="tech-card" style="padding: 25px; border-color: var(--neon-purple);">
+                    <h3 style="color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.2rem;">
+                        <i class="fa-solid fa-file-medical" style="color: var(--neon-purple);"></i> Raio-X do Aparelho
+                    </h3>
+                    
+                    <div class="condition-bar">
+                        <div class="cond-title"><span>Estética</span> <span style="color: #00ff88;">Impecável</span></div>
+                        <div class="progress-bg"><div class="progress-fill" style="width: 100%; background: #00ff88;"></div></div>
+                    </div>
+
+                    <div class="condition-bar">
+                        <div class="cond-title"><span>Bateria</span> <span style="color: #00ff88;">100%</span></div>
+                        <div class="progress-bg"><div class="progress-fill" style="width: 100%; background: #00ff88;"></div></div>
+                    </div>
+
+                    <div class="condition-bar">
+                        <div class="cond-title"><span>Itens</span> <span>Completo</span></div>
+                        <div class="progress-bg"><div class="progress-fill" style="width: 100%; background: #00ff88;"></div></div>
+                    </div>
+
+                    <p style="font-size: 0.9rem; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; color: #ccc; line-height: 1.6;">
+                        <strong>Nota do Esmael:</strong> <br>
+                        "Aparelho aberto apenas para o unboxing e testes. Está literalmente novo. Melhor opção intermediária da Samsung hoje."
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer style="background: #010005; padding: 60px 24px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="container">
+            <div class="brand" style="font-size: 1.8rem; margin-bottom: 5px;">SMARTGIRO By EsmaelTech!</div>
+            
+            <p style="color: var(--neon-cyan); font-size: 0.8rem; letter-spacing: 1.5px; margin-bottom: 25px; font-weight: 700; text-transform: uppercase;">
+                Um Projeto Independente
+            </p>
+
+
+
+            <div style="display: flex; justify-content: center; gap: 25px; margin-bottom: 40px;">
+                <a href="https://www.tiktok.com/@esmaeltech23" target="_blank" style="color: white; font-size: 1.5rem; transition: 0.3s;" onmouseover="this.style.color='#00f3ff'" onmouseout="this.style.color='white'">
+                    <i class="fa-brands fa-tiktok"></i>
+                </a>
+                <a href="https://www.youtube.com/@EsmaelTech023" target="_blank" style="color: white; font-size: 1.5rem; transition: 0.3s;" onmouseover="this.style.color='#FF0000'" onmouseout="this.style.color='white'">
+                    <i class="fa-brands fa-youtube"></i>
+                </a>
+            </div>
+            
+           
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 25px; margin-top: 40px;">
+                <p style="font-size: 0.7rem; opacity: 0.3;">
+                    Feito de fã de tecnologia para fã de tecnologia.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mainPhotos = document.querySelectorAll('.main-photo-item');
+            const thumbs = document.querySelectorAll('.thumb');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            let currentIndex = 0; 
+
+            if (mainPhotos.length === 0 || thumbs.length === 0) return;
+
+            function showImage(index) {
+                mainPhotos.forEach(photo => photo.classList.remove('active'));
+                thumbs.forEach(thumb => thumb.classList.remove('active'));
+
+                if(mainPhotos[index]) mainPhotos[index].classList.add('active');
+                if(thumbs[index]) thumbs[index].classList.add('active');
+                
+                if(thumbs[index]) {
+                    thumbs[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+                currentIndex = index;
+            }
+
+            if(nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    let nextIndex = currentIndex + 1;
+                    if (nextIndex >= mainPhotos.length) nextIndex = 0;
+                    showImage(nextIndex);
+                });
+            }
+
+            if(prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    let prevIndex = currentIndex - 1;
+                    if (prevIndex < 0) prevIndex = mainPhotos.length - 1;
+                    showImage(prevIndex);
+                });
+            }
+
+            thumbs.forEach((thumb, index) => {
+                thumb.addEventListener('click', () => {
+                    showImage(index);
+                });
+            });
+        });
+    </script>
+    
+    <script src="script.js"></script>
+</body>
+</html>
